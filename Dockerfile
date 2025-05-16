@@ -1,32 +1,32 @@
 FROM rstudio/plumber:latest
 
-# Install system dependencies
+# 1. Install system dependencies for CBC solver
 RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     libssl-dev \
     libxml2-dev \
-    coinor-libcbc-dev && \
+    coinor-libcbc-dev \
+    coinor-libclp-dev \
+    coinor-libcoinutils-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# Install R packages
-RUN R -e "install.packages(c('plumber', 'ROI', 'ROI.plugin.cbc', 'ompr', 'dplyr', 'readxl', 'openxlsx', 'httr'))"
+# 2. Install R packages with explicit dependencies
+RUN R -e "install.packages('remotes')"
+RUN R -e "remotes::install_version('ROI.plugin.cbc', version = '0.3.0')"
+RUN R -e "install.packages(c('plumber', 'ROI', 'ompr', 'dplyr', 'readxl', 'openxlsx', 'httr'))"
 
-# Set working directory and copy files
+# 3. Set up working directory
 WORKDIR /app
-COPY plumber.R .
-COPY entrypoint.sh .
+COPY . .
 
-# Verify files exist and set permissions
-RUN ls -la && \
-    test -f plumber.R && \
-    test -f entrypoint.sh && \
-    chmod +x entrypoint.sh
+# 4. Verify installation
+RUN R -e "library(ROI.plugin.cbc)" || (echo "Package verification failed" && exit 1)
 
 EXPOSE 10000
 
-# Health check
+# 5. Health check
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD curl -f http://localhost:10000/health || exit 1
 
-# Corrected instruction (was 'ENT' now 'ENTRYPOINT')
+# 6. Entrypoint
 ENTRYPOINT ["./entrypoint.sh"]
