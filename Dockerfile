@@ -20,5 +20,6 @@ EXPOSE 10000
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD curl -f http://localhost:10000/health || exit 1
 
-# Use direct Rscript command (most reliable)
-CMD ["Rscript", "-e", "pr <- plumber::plumb('plumber.R'); pr$run(host='0.0.0.0', port=as.numeric(Sys.getenv('PORT', 10000)))"]
+# Use a startup script
+COPY start_plumber.R /start_plumber.R
+CMD ["Rscript", "/start_plumber.R"]
