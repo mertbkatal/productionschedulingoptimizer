@@ -7,20 +7,24 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     coinor-libcbc-dev \
     coinor-libclp-dev \
-    coinor-libcoinutils-dev && \
+    coinor-libcoinutils-dev \
+    coinor-libosi-dev \
+    pkg-config && \
     rm -rf /var/lib/apt/lists/*
 
-# 2. Install R packages with explicit dependencies
-RUN R -e "install.packages('remotes')"
-RUN R -e "remotes::install_version('ROI.plugin.cbc', version = '0.3.0')"
+# 2. Install R packages (alternative method)
+RUN R -e "install.packages('BiocManager')"
+RUN R -e "BiocManager::install('ROI.plugin.cbc')"
 RUN R -e "install.packages(c('plumber', 'ROI', 'ompr', 'dplyr', 'readxl', 'openxlsx', 'httr'))"
 
-# 3. Set up working directory
-WORKDIR /app
-COPY . .
+# 3. Verify CBC solver works
+RUN R -e "library(ROI); ROI_available_solvers(); library(ROI.plugin.cbc)"
 
-# 4. Verify installation
-RUN R -e "library(ROI.plugin.cbc)" || (echo "Package verification failed" && exit 1)
+# 4. Set up working directory
+WORKDIR /app
+COPY plumber.R .
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
 
 EXPOSE 10000
 
