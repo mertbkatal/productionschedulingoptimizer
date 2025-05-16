@@ -14,12 +14,13 @@ RUN R -e "install.packages(c('plumber', 'ROI', 'ROI.plugin.cbc', 'ompr', 'dplyr'
 WORKDIR /app
 COPY . .
 
-# Render uses port 10000 by default
 EXPOSE 10000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD curl -f http://localhost:10000/health || exit 1
 
-# Fixed CMD instruction (critical change)
-CMD R -e "pr <- plumber::plumb('plumber.R'); pr\$run(host='0.0.0.0', port=as.numeric(Sys.getenv('PORT', 10000)))"
+# Use a shell script to run the application
+COPY run.sh /run.sh
+RUN chmod +x /run.sh
+CMD ["/run.sh"]
