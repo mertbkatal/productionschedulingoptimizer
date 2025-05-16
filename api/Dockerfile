@@ -11,14 +11,16 @@ RUN apt-get update && apt-get install -y \
 # Install R packages
 RUN R -e "install.packages(c('plumber', 'ROI', 'ROI.plugin.cbc', 'ompr', 'dplyr', 'readxl', 'openxlsx', 'httr'))"
 
-# Create and set working directory
+# Set working directory and copy files
 WORKDIR /app
+COPY plumber.R .
+COPY entrypoint.sh .
 
-# Copy ALL files from local folder to container
-COPY . .
-
-# Verify file existence (debugging step)
-RUN ls -la /app && test -f /app/plumber.R
+# Verify files exist
+RUN ls -la && \
+    test -f plumber.R && \
+    test -f entrypoint.sh && \
+    chmod +x entrypoint.sh
 
 EXPOSE 10000
 
@@ -26,5 +28,5 @@ EXPOSE 10000
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD curl -f http://localhost:10000/health || exit 1
 
-# Direct execution command (no intermediate script)
-CMD R -e "pr <- plumber::plumb('/app/plumber.R'); pr\$run(host='0.0.0.0', port=as.numeric(Sys.getenv('PORT', 10000)))"
+# Use entrypoint script
+ENTRYPOINT ["./entrypoint.sh"]
