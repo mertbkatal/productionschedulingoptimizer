@@ -20,7 +20,5 @@ EXPOSE 10000
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD curl -f http://localhost:10000/health || exit 1
 
-# Use a shell script to run the application
-COPY run.sh /run.sh
-RUN chmod +x /run.sh
-CMD ["/run.sh"]
+# Use direct Rscript command (most reliable)
+CMD ["Rscript", "-e", "pr <- plumber::plumb('plumber.R'); pr$run(host='0.0.0.0', port=as.numeric(Sys.getenv('PORT', 10000)))"]
