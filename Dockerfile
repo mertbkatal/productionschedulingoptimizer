@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y \
 
 # 2. Install R packages with multiple fallbacks
 RUN R -e "install.packages(c('remotes', 'ROI'))"
-RUN R -e "options(timeout=600); \
+RUN R -e "options(timeout=1200); \
           if(!require('ROI.plugin.cbc')) { \
             try(install.packages('ROI.plugin.cbc', repos='https://cran.r-project.org')); \
             if(!require('ROI.plugin.cbc')) try(remotes::install_github('datastorm-open/ROI.plugin.cbc@0.3-0')); \
