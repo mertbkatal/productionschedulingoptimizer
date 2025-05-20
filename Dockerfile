@@ -1,4 +1,4 @@
-FROM rstudio/plumber:latest
+FROM rocker/r-ver:4.3.0
 
 # 1. Install ALL system dependencies with zlib
 RUN apt-get update && apt-get install -y \
