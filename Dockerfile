@@ -1,40 +1,31 @@
 FROM rstudio/plumber:latest
 
-# 1. Install ALL system dependencies
+# 1. Install system dependencies (excluding Coin-OR packages)
 RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     libssl-dev \
     libxml2-dev \
-    coinor-libcbc-dev \
-    coinor-libclp-dev \
-    coinor-libcoinutils-dev \
-    coinor-libosi-dev \
     pkg-config \
-    libblas-dev \
-    liblapack-dev \
-    gfortran \
-    zlib1g-dev \
-    wget \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Install ROI.plugin.cbc from local copy
-# Replace the installation section with:
-RUN mkdir -p /tmp/r-packages && cd /tmp/r-packages && \
-    wget https://cran.r-project.org/src/contrib/Archive/ROI.plugin.cbc/ROI.plugin.cbc_0.3-0.tar.gz -O pkg.tar.gz && \
-    R CMD INSTALL pkg.tar.gz && \
-    rm -rf /tmp/r-packages
+# 2. Set up solver environment
+RUN mkdir -p /app/solvers
+COPY solvers/cbc.exe /app/solvers/
+RUN chmod +x /app/solvers/cbc.exe
 
-# 3. Install remaining R packages
-RUN R -e "install.packages(c('ROI', 'plumber', 'ompr', 'dplyr', 'readxl', 'openxlsx', 'httr'))"
+# 3. Install R packages
+RUN R -e "install.packages(c('ROI', 'ROI.plugin.cbc', 'plumber', 'ompr', 'dplyr', 'readxl', 'openxlsx', 'httr'))"
 
-# 4. Set up working directory
+# 4. Configure R to use local CBC executable
+RUN R -e "\
+  writeLines(paste0('cbc_path <- \"/app/solvers/cbc.exe\"'), '/app/cbc_config.R'); \
+  writeLines(paste0('options(ROI.plugin.cbc.cbc = cbc_path)'), '/app/cbc_config.R', append=TRUE)"
+
+# 5. Set up working directory
 WORKDIR /app
 COPY plumber.R .
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
-
-# 5. Final verification
-RUN R -e "library(ROI.plugin.cbc); cat('ROI.plugin.cbc successfully installed and loaded\n')"
 
 EXPOSE 10000
 HEALTHCHECK --interval=30s --timeout=3s \
