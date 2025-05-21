@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y \
 
 # 2. Download and install ROI.plugin.cbc manually
 RUN mkdir -p /tmp/r-packages && cd /tmp/r-packages && \
-    wget https://cran.r-project.org/src/contrib/Archive/ROI.plugin.cbc/ROI.plugin.cbc_0.3-0.tar.gz && \
+    wget https://raw.githubusercontent.com/your-backup-host/ROI.plugin.cbc_0.3-0.tar.gz && \
     R CMD INSTALL ROI.plugin.cbc_0.3-0.tar.gz && \
     rm -rf /tmp/r-packages
 
