@@ -1,29 +1,35 @@
 FROM rstudio/plumber:latest
 
-# 1. Install system dependencies
+# 1. Install system dependencies (including CoinOR-CBC)
 RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     libssl-dev \
     libxml2-dev \
     pkg-config \
+    coinor-cbc \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Create directory structure early
+# 2. Create directory structure
 RUN mkdir -p /app/solvers
 WORKDIR /app
 
-# 3. Install R packages (with error checking)
-RUN R -e "install.packages(c('ROI', 'ROI.plugin.cbc', 'plumber', 'ompr', 'dplyr', 'readxl', 'openxlsx', 'httr'))" && \
-    R -e "library(ROI); library(ROI.plugin.cbc)"  # Verify packages load
+# 3. Install R packages from correct repositories
+RUN R -e "\
+  install.packages('remotes'); \
+  remotes::install_version('ROI', version = '1.0-0'); \
+  install.packages(c('plumber', 'ompr', 'dplyr', 'readxl', 'openxlsx', 'httr')); \
+  remotes::install_github('datastorm-open/ROI.plugin.cbc')"
 
-# 4. Copy solver and configure (simplified approach)
+# 4. Verify package installation
+RUN R -e "\
+  library(ROI); \
+  library(ROI.plugin.cbc); \
+  print(ROI_registered_solvers())"
+
+# 5. Set up CBC solver
 COPY solvers/cbc.exe /app/solvers/
 RUN chmod +x /app/solvers/cbc.exe && \
-    echo 'cbc_path <- "/app/solvers/cbc.exe"' > cbc_config.R && \
-    echo 'options(ROI.plugin.cbc.cbc = cbc_path)' >> cbc_config.R
-
-# 5. Alternative configuration that always works
-RUN echo 'options(ROI.plugin.cbc.cbc = "/app/solvers/cbc.exe")' > /usr/local/lib/R/etc/Rprofile.site
+    echo 'options(ROI.plugin.cbc.cbc = "/app/solvers/cbc.exe")' >> /usr/local/lib/R/etc/Rprofile.site
 
 # 6. Copy application files
 COPY plumber.R .
