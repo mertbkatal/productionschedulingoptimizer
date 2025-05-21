@@ -17,11 +17,10 @@ RUN apt-get update && apt-get install -y \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Download and install ROI.plugin.cbc manually
-RUN mkdir -p /tmp/r-packages && cd /tmp/r-packages && \
-    wget https://raw.githubusercontent.com/your-backup-host/ROI.plugin.cbc_0.3-0.tar.gz && \
-    R CMD INSTALL ROI.plugin.cbc_0.3-0.tar.gz && \
-    rm -rf /tmp/r-packages
+# 2. Install ROI.plugin.cbc from local copy
+COPY ROI.plugin.cbc_0.3-0.tar.gz /tmp/
+RUN R CMD INSTALL /tmp/ROI.plugin.cbc_0.3-0.tar.gz && \
+    rm /tmp/ROI.plugin.cbc_0.3-0.tar.gz
 
 # 3. Install remaining R packages
 RUN R -e "install.packages(c('ROI', 'plumber', 'ompr', 'dplyr', 'readxl', 'openxlsx', 'httr'))"
