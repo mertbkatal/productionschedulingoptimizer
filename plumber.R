@@ -1,4 +1,5 @@
 # plumber.R
+source('/app/cbc_config.R')
 library(plumber)
 library(openxlsx)
 library(ROI)
