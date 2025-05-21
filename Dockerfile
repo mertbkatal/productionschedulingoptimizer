@@ -8,21 +8,22 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Set up solver environment
+# 2. Create /app early and set up solver environment
 RUN mkdir -p /app/solvers
+WORKDIR /app
 COPY solvers/cbc.exe /app/solvers/
 RUN chmod +x /app/solvers/cbc.exe
 
 # 3. Install R packages
 RUN R -e "install.packages(c('ROI', 'ROI.plugin.cbc', 'plumber', 'ompr', 'dplyr', 'readxl', 'openxlsx', 'httr'))"
 
-# 4. Configure R to use local CBC executable
+# 4. Configure R to use local CBC executable (now that /app exists)
 RUN R -e "\
-  writeLines(paste0('cbc_path <- \"/app/solvers/cbc.exe\"'), '/app/cbc_config.R'); \
-  writeLines(paste0('options(ROI.plugin.cbc.cbc = cbc_path)'), '/app/cbc_config.R', append=TRUE)"
+  writeLines('cbc_path <- \"/app/solvers/cbc.exe\"', 'cbc_config.R'); \
+  writeLines('options(ROI.plugin.cbc.cbc = cbc_path)', 'cbc_config.R', append=TRUE); \
+  source('cbc_config.R')"
 
-# 5. Set up working directory
-WORKDIR /app
+# 5. Copy remaining files
 COPY plumber.R .
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
