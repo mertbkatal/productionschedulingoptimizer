@@ -13,6 +13,13 @@ library(readxl)
 unlock_date <- "2026-04-25"
 correct_password <- "1020304050"
 
+#* @get /verify-solver
+function() {
+  list(
+    solver_exists = file.exists(Sys.getenv("ROI.plugin.cbc.cbc")),
+    solver_path = Sys.getenv("ROI.plugin.cbc.cbc")
+  )
+}
 #* @apiTitle Production Scheduling Optimizer API
 #* @apiDescription API version of the production scheduling optimization tool
 
